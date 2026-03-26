@@ -2,93 +2,115 @@
 <html lang="zh-CN" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <title>登录 - CTP 穿透测试</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTP Workspace | 登录</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        body {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .login-card {
-            width: 100%;
-            max-width: 500px;
-        }
-        .login-title {
-            color: var(--accent-color);
-            text-shadow: 0 0 12px var(--accent-glow);
-            font-weight: bold;
-        }
-        .form-control {
-            background-color: var(--bg-input);
-            border-color: var(--border-color);
-            color: var(--text-primary);
-        }
-        .form-control:focus {
-            background-color: var(--bg-input);
-            border-color: var(--accent-color);
-            color: var(--text-primary);
-            box-shadow: 0 0 0 0.25rem var(--accent-glow);
-        }
-        .btn-primary {
-            background: var(--accent-gradient);
-            border: none;
-            color: #fff;
-            font-weight: 600;
-        }
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
-    </style>
 </head>
-<body>
-    <div class="card login-card shadow-lg">
-        <div class="card-body p-5">
-            <h3 class="text-center mb-4 login-title">CTP 穿透测试登录</h3>
-            <form method="POST" action="/login">
-                <div class="mb-3">
-                    <label class="form-label">期货公司名称</label>
-                    <input type="text" class="form-control" name="CTP_NAME" value="{{ env.CTP_NAME or '' }}" required>
+<body class="login-page">
+    <main class="login-layout">
+        <section class="page-panel login-panel login-side">
+            <div class="login-brand">
+                <p class="eyebrow">CTP Workspace</p>
+                <h1>CTP 穿透测试接入</h1>
+                <p>把接入参数整理在一个安静的暗色工作台里，保留现有接口、字段名和后端逻辑不变。</p>
+            </div>
+
+            <div class="login-side-grid">
+                <div class="login-side-item">
+                    <strong>账户凭证</strong>
+                    <span class="subtle-copy">公司名称、BrokerID、账号与密码集中录入，信息更连贯。</span>
                 </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">账号</label>
-                        <input type="text" class="form-control" name="CTP_USERNAME" value="{{ env.CTP_USERNAME or '' }}" required>
+                <div class="login-side-item">
+                    <strong>连接地址</strong>
+                    <span class="subtle-copy">交易服务器与行情服务器分开呈现，长地址保留单列节奏。</span>
+                </div>
+                <div class="login-side-item">
+                    <strong>应用认证</strong>
+                    <span class="subtle-copy">AppID、授权码和产品信息保留原字段，便于回填与复用。</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="page-panel login-panel login-form-panel">
+            <div class="login-form-header">
+                <div>
+                    <p class="section-kicker">接入参数</p>
+                    <h2>登录与连接</h2>
+                </div>
+                <p class="section-note"><code>POST /login</code> 与全部原有表单 <code>name</code> 字段保持不变。</p>
+            </div>
+
+            <form method="POST" action="/login" class="login-form">
+                <section class="form-section">
+                    <div class="form-section-header">
+                        <h3>账户凭证</h3>
+                        <span class="helper-text">短字段双列，便于快速核对。</span>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">密码</label>
-                        <input type="password" class="form-control" name="CTP_PASSWORD" value="{{ env.CTP_PASSWORD or '' }}" required>
+                    <div class="form-grid">
+                        <div class="field-group field-span-full">
+                            <label class="form-label" for="ctp-name">期货公司名称</label>
+                            <input id="ctp-name" type="text" class="form-control" name="CTP_NAME" value="{{ env.CTP_NAME or '' }}" required>
+                        </div>
+                        <div class="field-group">
+                            <label class="form-label" for="ctp-broker-id">经纪商代码 (BrokerID)</label>
+                            <input id="ctp-broker-id" type="text" class="form-control" name="CTP_BROKER_ID" value="{{ env.CTP_BROKER_ID or '' }}" required>
+                        </div>
+                        <div class="field-group">
+                            <label class="form-label" for="ctp-username">账号</label>
+                            <input id="ctp-username" type="text" class="form-control" name="CTP_USERNAME" value="{{ env.CTP_USERNAME or '' }}" required>
+                        </div>
+                        <div class="field-group">
+                            <label class="form-label" for="ctp-password">密码</label>
+                            <input id="ctp-password" type="password" class="form-control" name="CTP_PASSWORD" value="{{ env.CTP_PASSWORD or '' }}" required>
+                        </div>
                     </div>
+                </section>
+
+                <section class="form-section">
+                    <div class="form-section-header">
+                        <h3>连接地址</h3>
+                        <span class="helper-text">服务器地址保持单列，避免长串截断。</span>
+                    </div>
+                    <div class="form-grid">
+                        <div class="field-group field-span-full">
+                            <label class="form-label" for="ctp-td-server">交易服务器 (TD Server)</label>
+                            <input id="ctp-td-server" type="text" class="form-control" name="CTP_TD_SERVER" value="{{ env.CTP_TD_SERVER or '' }}" required>
+                        </div>
+                        <div class="field-group field-span-full">
+                            <label class="form-label" for="ctp-md-server">行情服务器 (MD Server)</label>
+                            <input id="ctp-md-server" type="text" class="form-control" name="CTP_MD_SERVER" value="{{ env.CTP_MD_SERVER or '' }}" required>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <div class="form-section-header">
+                        <h3>应用认证</h3>
+                        <span class="helper-text">保留原字段语义与必填校验。</span>
+                    </div>
+                    <div class="form-grid">
+                        <div class="field-group">
+                            <label class="form-label" for="appid">AppID</label>
+                            <input id="appid" type="text" class="form-control" name="APPID" value="{{ env.APPID or '' }}" required>
+                        </div>
+                        <div class="field-group">
+                            <label class="form-label" for="auth-code">授权码 (Auth Code)</label>
+                            <input id="auth-code" type="text" class="form-control" name="CTP_AUTH_CODE" value="{{ env.CTP_AUTH_CODE or '' }}" required>
+                        </div>
+                        <div class="field-group field-span-full">
+                            <label class="form-label" for="product-info">产品信息 (Product Info)</label>
+                            <input id="product-info" type="text" class="form-control" name="CTP_PRODUCT_INFO" value="{{ env.CTP_PRODUCT_INFO or '' }}">
+                        </div>
+                    </div>
+                </section>
+
+                <div class="login-actions">
+                    <span class="helper-text">登录后将沿用现有 worker 重启与配置回填流程。</span>
+                    <button type="submit" class="btn btn-primary">连接 / 登录</button>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">经纪商代码 (BrokerID)</label>
-                    <input type="text" class="form-control" name="CTP_BROKER_ID" value="{{ env.CTP_BROKER_ID or '' }}" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">交易服务器 (TD Server)</label>
-                    <input type="text" class="form-control" name="CTP_TD_SERVER" value="{{ env.CTP_TD_SERVER or '' }}" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">行情服务器 (MD Server)</label>
-                    <input type="text" class="form-control" name="CTP_MD_SERVER" value="{{ env.CTP_MD_SERVER or '' }}" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">AppID</label>
-                    <input type="text" class="form-control" name="APPID" value="{{ env.APPID or '' }}" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">授权码 (Auth Code)</label>
-                    <input type="text" class="form-control" name="CTP_AUTH_CODE" value="{{ env.CTP_AUTH_CODE or '' }}" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">产品信息 (Product Info)</label>
-                    <input type="text" class="form-control" name="CTP_PRODUCT_INFO" value="{{ env.CTP_PRODUCT_INFO or '' }}">
-                </div>
-                <button type="submit" class="btn btn-primary w-100 mt-3">连接 / 登录</button>
             </form>
-        </div>
-    </div>
+        </section>
+    </main>
 </body>
 </html>

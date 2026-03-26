@@ -2,178 +2,285 @@
 <html lang="zh-CN" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <title>CTP 穿透测试控制台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTP Workspace | CTP 穿透测试</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
 </head>
-<body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- 左侧控制栏 -->
-            <div class="col-md-3 sidebar">
-                <h2 class="mb-4 ps-4" style="font-size: 1.6rem;">CTP 穿透测试</h2>
-                
-                <!-- 环境信息 -->
-                <div class="card mb-4 mx-2">
-                    <div class="card-body py-3">
-                        <small class="text-secondary text-uppercase" style="letter-spacing: 1px;">当前环境</small>
-                        <div class="fw-bold mt-1" style="color: var(--accent-color); font-size: 1.1em;">{{ env.CTP_NAME }}</div>
-                        <div class="mt-1" style="font-size: 0.9em;">账户: {{ env.CTP_USERNAME }}</div>
-                        <div class="mt-1" style="font-size: 0.9em;" title="{{ env.CTP_TD_SERVER }}">交易服务器: {{ env.CTP_TD_SERVER }}</div>
-                        <div class="mt-1" style="font-size: 0.9em;" title="{{ env.CTP_MD_SERVER }}">行情服务器: {{ env.CTP_MD_SERVER }}</div>
-                    </div>
+<body class="dashboard-page">
+    <div class="app-shell">
+        <div class="workspace-grid">
+            <aside class="page-panel ops-rail">
+                <div class="brand-block">
+                    <p class="eyebrow">CTP Workspace</p>
+                    <h1>CTP 穿透测试</h1>
+                    <p>把环境、统计和动作收束成一个安静的暗色工作区，原有测试顺序、接口和事件保持不变。</p>
                 </div>
 
-                <!-- 阈值设置已移动到弹窗 -->
+                <section class="rail-panel">
+                    <div class="panel-header">
+                        <p class="panel-kicker">当前环境</p>
+                        <h2 class="panel-title">{{ env.CTP_NAME }}</h2>
+                    </div>
+                    <div class="env-list">
+                        <div class="env-row">
+                            <span class="env-label">账户</span>
+                            <span class="env-value">{{ env.CTP_USERNAME }}</span>
+                        </div>
+                        <div class="env-row">
+                            <span class="env-label">交易服务器</span>
+                            <span class="env-value" title="{{ env.CTP_TD_SERVER }}">{{ env.CTP_TD_SERVER }}</span>
+                        </div>
+                        <div class="env-row">
+                            <span class="env-label">行情服务器</span>
+                            <span class="env-value" title="{{ env.CTP_MD_SERVER }}">{{ env.CTP_MD_SERVER }}</span>
+                        </div>
+                    </div>
+                </section>
 
-                <div class="card mb-4 mx-2">
-                    <div class="card-body py-3">
-                        <small class="text-secondary text-uppercase" style="letter-spacing: 1px;">实时统计</small>
-                        <div class="mt-2" style="font-size: 0.9em;">
-                            <div class="d-flex justify-content-between"><span>报单笔数</span><span id="metric-order">-</span></div>
-                            <div class="d-flex justify-content-between"><span>撤单笔数</span><span id="metric-cancel">-</span></div>
-                            <div class="d-flex justify-content-between"><span>重复报单(选测)</span><span id="metric-repeat">-</span></div>
+                <section class="rail-panel">
+                    <div class="panel-header">
+                        <p class="panel-kicker">实时统计</p>
+                        <h2 class="panel-title">风险计数</h2>
+                    </div>
+                    <div class="metric-list">
+                        <div class="metric-row">
+                            <span class="metric-label">报单笔数</span>
+                            <span class="metric-value" id="metric-order">-</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">撤单笔数</span>
+                            <span class="metric-value" id="metric-cancel">-</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">重复报单(选测)</span>
+                            <span class="metric-value" id="metric-repeat">-</span>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- 测试控制按钮 -->
-                <div class="accordion mx-2" id="testAccordion">
-                    <!-- 2.1 基础 -->
-                    <div class="accordion-item">
-                        <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#c21">接口适应性</button></h2>
-                        <div id="c21" class="accordion-collapse collapse show" data-bs-parent="#testAccordion">
-                            <div class="accordion-body p-2">
-                                <button onclick="runTest('2.1.1')" class="btn btn-outline-light btn-sm w-100 mb-2">连通性测试</button>
-                                <button onclick="openTestConfigModal()" class="btn btn-outline-secondary btn-sm w-100 mb-2">设置测试参数</button>
-                                <button onclick="runTest('2.1.2.1')" class="btn btn-outline-light btn-sm w-100 mb-2">开仓测试</button>
-                                <button onclick="runTest('2.1.2.2')" class="btn btn-outline-light btn-sm w-100 mb-2">平仓测试</button>
-                                <button onclick="runTest('2.1.2.3')" class="btn btn-outline-light btn-sm w-100">撤单测试</button>
-                            </div>
-                        </div>
+                <section class="rail-panel rail-tests">
+                    <div class="panel-header">
+                        <p class="panel-kicker">测试入口</p>
+                        <h2 class="panel-title">六组用例</h2>
                     </div>
 
-                    <!-- 2.2 异常 -->
-                    <div class="accordion-item">
-                        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c22">异常监测</button></h2>
-                        <div id="c22" class="accordion-collapse collapse" data-bs-parent="#testAccordion">
-                            <div class="accordion-body p-2">
-                                <button onclick="runTest('2.2.1.1')" class="btn btn-outline-light btn-sm w-100 mb-2">连接状态监测</button>
-                                <button onclick="runTest('2.2.1.2')" class="btn btn-outline-light btn-sm w-100 mb-2">断线模拟</button>
-                                <button onclick="runTest('2.2.1.3')" class="btn btn-outline-light btn-sm w-100 mb-2">重连模拟</button>
-                                <hr class="border-secondary opacity-25 my-3">
-                                <button onclick="openRepeatMonitorConfigModal()" class="btn btn-outline-secondary btn-sm w-100 mb-2">设置重复报单监测阈值</button>
-                                <button onclick="runTest('2.2.3.1')" class="btn btn-outline-light btn-sm w-100 mb-2">重复报单监测(开)</button>
-                                <button onclick="runTest('2.2.3.2')" class="btn btn-outline-light btn-sm w-100 mb-2">重复报单监测(平)</button>
-                                <button onclick="runTest('2.2.3.3')" class="btn btn-outline-light btn-sm w-100">重复报单监测(撤)</button>
+                    <div class="accordion rail-accordion" id="testAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#c21" aria-expanded="true" aria-controls="c21">
+                                    2.1 接口适应性
+                                </button>
+                            </h2>
+                            <div id="c21" class="accordion-collapse collapse show" data-bs-parent="#testAccordion">
+                                <div class="accordion-body">
+                                    <div class="action-stack">
+                                        <button onclick="runTest('2.1.1')" class="btn btn-outline-light btn-sm w-100">连通性测试</button>
+                                        <button onclick="openTestConfigModal()" class="btn btn-outline-secondary btn-sm w-100">设置测试参数</button>
+                                        <button onclick="runTest('2.1.2.1')" class="btn btn-outline-light btn-sm w-100">开仓测试</button>
+                                        <button onclick="runTest('2.1.2.2')" class="btn btn-outline-light btn-sm w-100">平仓测试</button>
+                                        <button onclick="runTest('2.1.2.3')" class="btn btn-outline-light btn-sm w-100">撤单测试</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- 2.3 阈值 -->
-                    <div class="accordion-item">
-                        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c23">阈值管理</button></h2>
-                        <div id="c23" class="accordion-collapse collapse" data-bs-parent="#testAccordion">
-                            <div class="accordion-body p-2">
-                                <button onclick="openThresholdModal()" class="btn btn-outline-secondary btn-sm w-100 mb-2">设置阈值</button>
-                                <button onclick="runTest('2.3.1.1')" class="btn btn-outline-light btn-sm w-100 mb-2">报单统计与阈值预警</button>
-                                <button onclick="runTest('2.3.1.3')" class="btn btn-outline-light btn-sm w-100 mb-2">撤单统计与阈值预警</button>
-                                <button onclick="runTest('2.3.1.5')" class="btn btn-outline-light btn-sm w-100">重复报单预警</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 2.4 错误 -->
-                    <div class="accordion-item">
-                        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c24">错误防范</button></h2>
-                        <div id="c24" class="accordion-collapse collapse" data-bs-parent="#testAccordion">
-                            <div class="accordion-body p-2">
-                                <button onclick="runTest('2.4.1.1')" class="btn btn-outline-light btn-sm w-100 mb-2">合约代码错误</button>
-                                <button onclick="runTest('2.4.1.2')" class="btn btn-outline-light btn-sm w-100 mb-2">价格错误</button>
-                                <button onclick="openVolumeLimitModal()" class="btn btn-outline-light btn-sm w-100 mb-2">数量超限</button>
-                                <hr class="border-secondary opacity-25 my-3">
-                                <button onclick="runTest('2.4.2.1')" class="btn btn-outline-light btn-sm w-100 mb-2">资金不足提示</button>
-                                <button onclick="runTest('2.4.2.2')" class="btn btn-outline-light btn-sm w-100 mb-2">持仓不足提示</button>
-                                <button onclick="runTest('2.4.2.3')" class="btn btn-outline-light btn-sm w-100">市场状态错误</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 2.5 应急 -->
-                    <div class="accordion-item">
-                        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c25">应急处理</button></h2>
-                        <div id="c25" class="accordion-collapse collapse" data-bs-parent="#testAccordion">
-                            <div class="accordion-body p-2">
-                                <button onclick="runTest('2.5.1.1')" class="btn btn-outline-light btn-sm w-100 mb-2">限制交易权限</button>
-                                <button onclick="runTest('2.5.1.2')" class="btn btn-outline-light btn-sm w-100 mb-2">暂停策略执行</button>
-                                <button onclick="runTest('2.5.1.3')" class="btn btn-danger btn-sm w-100 mb-2">强制账号退出</button>
-                                <hr class="border-secondary opacity-25 my-3">
-                                <button onclick="runTest('2.5.2.1')" class="btn btn-outline-light btn-sm w-100 mb-2">撤销部分成交</button>
-                                <button onclick="runTest('2.5.2.2')" class="btn btn-outline-light btn-sm w-100 mb-2">批量撤销所有</button>
-                                <hr class="border-secondary opacity-25 my-3">
-                                <button onclick="resetSystem()" class="btn btn-success btn-sm w-100">重置 / 恢复交易权限</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 2.6 日志 -->
-                    <div class="accordion-item">
-                        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c26">日志记录</button></h2>
-                        <div id="c26" class="accordion-collapse collapse" data-bs-parent="#testAccordion">
-                            <div class="accordion-body p-2">
-                                <button onclick="runTest('2.6.1')" class="btn btn-outline-light btn-sm w-100">日志记录功能</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- 右侧日志区 -->
-            <div class="col-md-9">
-                <div id="log-container">
-                    <div class="d-flex align-items-center justify-content-center h-100 text-secondary">
-                        <small>Waiting for connection...</small>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c22" aria-expanded="false" aria-controls="c22">
+                                    2.2 异常监测
+                                </button>
+                            </h2>
+                            <div id="c22" class="accordion-collapse collapse" data-bs-parent="#testAccordion">
+                                <div class="accordion-body">
+                                    <div class="action-stack">
+                                        <button onclick="runTest('2.2.1.1')" class="btn btn-outline-light btn-sm w-100">连接状态监测</button>
+                                        <button onclick="runTest('2.2.1.2')" class="btn btn-outline-light btn-sm w-100">断线模拟</button>
+                                        <button onclick="runTest('2.2.1.3')" class="btn btn-outline-light btn-sm w-100">重连模拟</button>
+                                    </div>
+                                    <hr class="action-divider">
+                                    <div class="action-stack">
+                                        <button onclick="openRepeatMonitorConfigModal()" class="btn btn-outline-secondary btn-sm w-100">设置重复报单监测阈值</button>
+                                        <button onclick="runTest('2.2.3.1')" class="btn btn-outline-light btn-sm w-100">重复报单监测(开)</button>
+                                        <button onclick="runTest('2.2.3.2')" class="btn btn-outline-light btn-sm w-100">重复报单监测(平)</button>
+                                        <button onclick="runTest('2.2.3.3')" class="btn btn-outline-light btn-sm w-100">重复报单监测(撤)</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c23" aria-expanded="false" aria-controls="c23">
+                                    2.3 阈值管理
+                                </button>
+                            </h2>
+                            <div id="c23" class="accordion-collapse collapse" data-bs-parent="#testAccordion">
+                                <div class="accordion-body">
+                                    <div class="action-stack">
+                                        <button onclick="openThresholdModal()" class="btn btn-outline-secondary btn-sm w-100">设置阈值</button>
+                                        <button onclick="runTest('2.3.1.1')" class="btn btn-outline-light btn-sm w-100">报单统计与阈值预警</button>
+                                        <button onclick="runTest('2.3.1.3')" class="btn btn-outline-light btn-sm w-100">撤单统计与阈值预警</button>
+                                        <button onclick="runTest('2.3.1.5')" class="btn btn-outline-light btn-sm w-100">重复报单预警</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c24" aria-expanded="false" aria-controls="c24">
+                                    2.4 错误防范
+                                </button>
+                            </h2>
+                            <div id="c24" class="accordion-collapse collapse" data-bs-parent="#testAccordion">
+                                <div class="accordion-body">
+                                    <div class="action-stack">
+                                        <button onclick="runTest('2.4.1.1')" class="btn btn-outline-light btn-sm w-100">合约代码错误</button>
+                                        <button onclick="runTest('2.4.1.2')" class="btn btn-outline-light btn-sm w-100">价格错误</button>
+                                        <button onclick="openVolumeLimitModal()" class="btn btn-outline-secondary btn-sm w-100">数量超限</button>
+                                    </div>
+                                    <hr class="action-divider">
+                                    <div class="action-stack">
+                                        <button onclick="runTest('2.4.2.1')" class="btn btn-outline-light btn-sm w-100">资金不足提示</button>
+                                        <button onclick="runTest('2.4.2.2')" class="btn btn-outline-light btn-sm w-100">持仓不足提示</button>
+                                        <button onclick="runTest('2.4.2.3')" class="btn btn-outline-light btn-sm w-100">市场状态错误</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c25" aria-expanded="false" aria-controls="c25">
+                                    2.5 应急处理
+                                </button>
+                            </h2>
+                            <div id="c25" class="accordion-collapse collapse" data-bs-parent="#testAccordion">
+                                <div class="accordion-body">
+                                    <div class="action-caption">常规动作</div>
+                                    <div class="action-stack">
+                                        <button onclick="runTest('2.5.1.1')" class="btn btn-outline-light btn-sm w-100">限制交易权限</button>
+                                        <button onclick="runTest('2.5.1.2')" class="btn btn-outline-light btn-sm w-100">暂停策略执行</button>
+                                    </div>
+                                    <hr class="action-divider">
+                                    <div class="action-caption action-caption-danger">危险动作</div>
+                                    <div class="action-stack">
+                                        <button onclick="runTest('2.5.1.3')" class="btn btn-danger btn-sm w-100">强制账号退出</button>
+                                        <button onclick="runTest('2.5.2.1')" class="btn btn-outline-light btn-sm w-100">撤销部分成交</button>
+                                        <button onclick="runTest('2.5.2.2')" class="btn btn-outline-light btn-sm w-100">批量撤销所有</button>
+                                    </div>
+                                    <hr class="action-divider">
+                                    <div class="action-caption action-caption-success">恢复动作</div>
+                                    <div class="action-stack">
+                                        <button onclick="resetSystem()" class="btn btn-success btn-sm w-100">重置 / 恢复交易权限</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c26" aria-expanded="false" aria-controls="c26">
+                                    2.6 日志记录
+                                </button>
+                            </h2>
+                            <div id="c26" class="accordion-collapse collapse" data-bs-parent="#testAccordion">
+                                <div class="accordion-body">
+                                    <div class="action-stack">
+                                        <button onclick="runTest('2.6.1')" class="btn btn-outline-light btn-sm w-100">日志记录功能</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </section>
+            </aside>
+
+            <main class="terminal-workspace">
+                <section class="page-panel status-bar">
+                    <div class="status-cluster">
+                        <div class="status-chip">
+                            <span class="status-chip-label">Socket</span>
+                            <span class="status-chip-value" id="socket-state" data-state="offline">未连接</span>
+                        </div>
+                        <div class="status-chip">
+                            <span class="status-chip-label">Worker</span>
+                            <span class="status-chip-value" id="worker-state">未知</span>
+                        </div>
+                        <div class="status-chip">
+                            <span class="status-chip-label">当前用例</span>
+                            <span class="status-chip-value" id="current-case">空闲</span>
+                        </div>
+                        <div class="status-chip">
+                            <span class="status-chip-label">风控</span>
+                            <span class="status-chip-value" id="risk-active-state">-</span>
+                        </div>
+                        <div class="status-chip">
+                            <span class="status-chip-label">最近结束</span>
+                            <span class="status-chip-value" id="last-case-finished">-</span>
+                        </div>
+                    </div>
+                    <div class="status-side">
+                        <span class="status-side-label">最近状态</span>
+                        <span class="status-side-value" id="worker-last-error">等待 Worker 状态...</span>
+                    </div>
+                </section>
+
+                <section class="page-panel terminal-panel">
+                    <div class="terminal-header">
+                        <div>
+                            <p class="panel-kicker">主终端</p>
+                            <h2 class="terminal-title">执行日志</h2>
+                        </div>
+                        <div class="terminal-meta">
+                            <div class="terminal-meta-item">环境 <strong>{{ env.CTP_NAME }}</strong></div>
+                            <div class="terminal-meta-item">网关 <span id="gateway-state">待确认</span></div>
+                            <div class="terminal-meta-item">日志行数 <span id="log-line-count">1</span></div>
+                        </div>
+                    </div>
+                    <div id="log-container">
+                        <div class="terminal-placeholder">Waiting for connection...</div>
+                    </div>
+                </section>
+            </main>
         </div>
     </div>
 
-    <!-- Threshold Settings Modal -->
     <div class="modal fade" id="thresholdModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">阈值设置及预警</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row g-2">
-                        <div class="col-12">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div style="font-size: 0.9em;">报单阈值</div>
-                                <div class="text-secondary" style="font-size: 0.85em;">当前: <span id="current-thr-order">-</span></div>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <div class="config-item-head">
+                                <label for="thr-order" class="form-label">报单阈值</label>
+                                <span class="current-value">当前: <span id="current-thr-order">-</span></span>
                             </div>
-                            <input id="thr-order" type="number" min="1" step="1" class="form-control form-control-sm mt-1" placeholder="例如 5">
+                            <input id="thr-order" type="number" min="1" step="1" class="form-control" placeholder="例如 5">
                         </div>
-                        <div class="col-12">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div style="font-size: 0.9em;">撤单阈值</div>
-                                <div class="text-secondary" style="font-size: 0.85em;">当前: <span id="current-thr-cancel">-</span></div>
+                        <div class="config-item">
+                            <div class="config-item-head">
+                                <label for="thr-cancel" class="form-label">撤单阈值</label>
+                                <span class="current-value">当前: <span id="current-thr-cancel">-</span></span>
                             </div>
-                            <input id="thr-cancel" type="number" min="1" step="1" class="form-control form-control-sm mt-1" placeholder="例如 3">
+                            <input id="thr-cancel" type="number" min="1" step="1" class="form-control" placeholder="例如 3">
                         </div>
-                        <div class="col-12">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div style="font-size: 0.9em;">重复报单阈值(选测)</div>
-                                <div class="text-secondary" style="font-size: 0.85em;">当前: <span id="current-thr-repeat">-</span></div>
+                        <div class="config-item">
+                            <div class="config-item-head">
+                                <label for="thr-repeat" class="form-label">重复报单阈值(选测)</label>
+                                <span class="current-value">当前: <span id="current-thr-repeat">-</span></span>
                             </div>
-                            <div class="form-check form-switch mt-1">
+                            <div class="switch-row">
                                 <input class="form-check-input" type="checkbox" role="switch" id="thr-repeat-enabled" checked>
-                                <label class="form-check-label" for="thr-repeat-enabled" style="font-size: 0.85em;">启用重复报单预警</label>
+                                <label class="form-check-label" for="thr-repeat-enabled">启用重复报单预警</label>
                             </div>
-                            <input id="thr-repeat" type="number" min="1" step="1" class="form-control form-control-sm mt-1" placeholder="例如 2">
+                            <input id="thr-repeat" type="number" min="1" step="1" class="form-control" placeholder="例如 2">
                         </div>
                     </div>
                 </div>
@@ -186,21 +293,21 @@
     </div>
 
     <div class="modal fade" id="volumeLimitModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">数量超限参数设置</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row g-2">
-                        <div class="col-12">
-                            <label for="volerr-symbol" class="form-label" style="font-size: 0.9em;">发单品种 (test_symbol)</label>
-                            <input id="volerr-symbol" type="text" class="form-control form-control-sm" placeholder="例如 IF2602">
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label for="volerr-symbol" class="form-label">发单品种 (test_symbol)</label>
+                            <input id="volerr-symbol" type="text" class="form-control" placeholder="例如 IF2602">
                         </div>
-                        <div class="col-12">
-                            <label for="volerr-volume" class="form-label" style="font-size: 0.9em;">委托手数 (volume)</label>
-                            <input id="volerr-volume" type="number" min="1" step="1" class="form-control form-control-sm" placeholder="例如 10000">
+                        <div class="config-item">
+                            <label for="volerr-volume" class="form-label">委托手数 (volume)</label>
+                            <input id="volerr-volume" type="number" min="1" step="1" class="form-control" placeholder="例如 10000">
                         </div>
                     </div>
                 </div>
@@ -212,27 +319,26 @@
         </div>
     </div>
 
-    <!-- Test Config Modal -->
     <div class="modal fade" id="testConfigModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">基础交易参数设置</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row g-2">
-                        <div class="col-12">
-                            <label for="conf-symbol" class="form-label" style="font-size: 0.9em;">测试合约代码 (test_symbol)</label>
-                            <input id="conf-symbol" type="text" class="form-control form-control-sm" placeholder="例如 IF2602">
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label for="conf-symbol" class="form-label">测试合约代码 (test_symbol)</label>
+                            <input id="conf-symbol" type="text" class="form-control" placeholder="例如 IF2602">
                         </div>
-                        <div class="col-12">
-                            <label for="conf-safe-price" class="form-label" style="font-size: 0.9em;">安全买入价 (safe_buy_price) - 平仓用</label>
-                            <input id="conf-safe-price" type="number" step="0.2" class="form-control form-control-sm" placeholder="例如 4700.0">
+                        <div class="config-item">
+                            <label for="conf-safe-price" class="form-label">安全买入价 (safe_buy_price) - 平仓用</label>
+                            <input id="conf-safe-price" type="number" step="0.2" class="form-control" placeholder="例如 4700.0">
                         </div>
-                        <div class="col-12">
-                            <label for="conf-deal-price" class="form-label" style="font-size: 0.9em;">成交买入价 (deal_buy_price) - 开仓用</label>
-                            <input id="conf-deal-price" type="number" step="0.2" class="form-control form-control-sm" placeholder="例如 4800.0">
+                        <div class="config-item">
+                            <label for="conf-deal-price" class="form-label">成交买入价 (deal_buy_price) - 开仓用</label>
+                            <input id="conf-deal-price" type="number" step="0.2" class="form-control" placeholder="例如 4800.0">
                         </div>
                     </div>
                 </div>
@@ -244,35 +350,34 @@
         </div>
     </div>
 
-    <!-- Repeat Monitor Config Modal -->
     <div class="modal fade" id="repeatMonitorConfigModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">重复报单监测参数设置</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row g-2">
-                        <div class="col-12">
-                            <label for="repeat-open-thr" class="form-label" style="font-size: 0.9em;">开仓监测阈值 (repeat_open_threshold)</label>
-                            <input id="repeat-open-thr" type="number" min="1" step="1" class="form-control form-control-sm" placeholder="例如 2">
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label for="repeat-open-thr" class="form-label">开仓监测阈值 (repeat_open_threshold)</label>
+                            <input id="repeat-open-thr" type="number" min="1" step="1" class="form-control" placeholder="例如 2">
                         </div>
-                        <div class="col-12">
-                            <label for="repeat-close-thr" class="form-label" style="font-size: 0.9em;">平仓监测阈值 (repeat_close_threshold)</label>
-                            <input id="repeat-close-thr" type="number" min="1" step="1" class="form-control form-control-sm" placeholder="例如 2">
+                        <div class="config-item">
+                            <label for="repeat-close-thr" class="form-label">平仓监测阈值 (repeat_close_threshold)</label>
+                            <input id="repeat-close-thr" type="number" min="1" step="1" class="form-control" placeholder="例如 2">
                         </div>
-                        <div class="col-12">
-                            <label for="repeat-conf-symbol" class="form-label" style="font-size: 0.9em;">测试合约代码 (test_symbol)</label>
-                            <input id="repeat-conf-symbol" type="text" class="form-control form-control-sm" placeholder="例如 IF2602">
+                        <div class="config-item">
+                            <label for="repeat-conf-symbol" class="form-label">测试合约代码 (test_symbol)</label>
+                            <input id="repeat-conf-symbol" type="text" class="form-control" placeholder="例如 IF2602">
                         </div>
-                        <div class="col-12">
-                            <label for="repeat-conf-safe-price" class="form-label" style="font-size: 0.9em;">安全买入价 (safe_buy_price) - 平仓用</label>
-                            <input id="repeat-conf-safe-price" type="number" step="0.2" class="form-control form-control-sm" placeholder="例如 4700.0">
+                        <div class="config-item">
+                            <label for="repeat-conf-safe-price" class="form-label">安全买入价 (safe_buy_price) - 平仓用</label>
+                            <input id="repeat-conf-safe-price" type="number" step="0.2" class="form-control" placeholder="例如 4700.0">
                         </div>
-                        <div class="col-12">
-                            <label for="repeat-conf-deal-price" class="form-label" style="font-size: 0.9em;">成交买入价 (deal_buy_price) - 开仓用</label>
-                            <input id="repeat-conf-deal-price" type="number" step="0.2" class="form-control form-control-sm" placeholder="例如 4800.0">
+                        <div class="config-item">
+                            <label for="repeat-conf-deal-price" class="form-label">成交买入价 (deal_buy_price) - 开仓用</label>
+                            <input id="repeat-conf-deal-price" type="number" step="0.2" class="form-control" placeholder="例如 4800.0">
                         </div>
                     </div>
                 </div>
@@ -284,23 +389,22 @@
         </div>
     </div>
 
-    <!-- Order/Cancel Monitor Config Modal -->
     <div class="modal fade" id="orderCancelMonitorConfigModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">报撤单监测阈值设置</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row g-2">
-                        <div class="col-12">
-                            <label for="order-monitor-thr" class="form-label" style="font-size: 0.9em;">报单监测阈值 (order_monitor_threshold)</label>
-                            <input id="order-monitor-thr" type="number" min="1" step="1" class="form-control form-control-sm" placeholder="例如 5">
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label for="order-monitor-thr" class="form-label">报单监测阈值 (order_monitor_threshold)</label>
+                            <input id="order-monitor-thr" type="number" min="1" step="1" class="form-control" placeholder="例如 5">
                         </div>
-                        <div class="col-12">
-                            <label for="cancel-monitor-thr" class="form-label" style="font-size: 0.9em;">撤单监测阈值 (cancel_monitor_threshold)</label>
-                            <input id="cancel-monitor-thr" type="number" min="1" step="1" class="form-control form-control-sm" placeholder="例如 3">
+                        <div class="config-item">
+                            <label for="cancel-monitor-thr" class="form-label">撤单监测阈值 (cancel_monitor_threshold)</label>
+                            <input id="cancel-monitor-thr" type="number" min="1" step="1" class="form-control" placeholder="例如 3">
                         </div>
                     </div>
                 </div>
@@ -312,7 +416,7 @@
         </div>
     </div>
 
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+    <div class="toast-host">
         <div id="toast-container"></div>
     </div>
 
@@ -365,70 +469,147 @@
             volume: document.getElementById('volerr-volume'),
         };
 
+        const statusElements = {
+            socket: document.getElementById('socket-state'),
+            worker: document.getElementById('worker-state'),
+            currentCase: document.getElementById('current-case'),
+            risk: document.getElementById('risk-active-state'),
+            lastFinished: document.getElementById('last-case-finished'),
+            gateway: document.getElementById('gateway-state'),
+            lastError: document.getElementById('worker-last-error'),
+            lineCount: document.getElementById('log-line-count'),
+        };
+
         let thresholdModal;
         let volumeLimitModal;
         let testConfigModal;
         let repeatMonitorConfigModal;
         let orderCancelMonitorConfigModal;
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const el = document.getElementById('thresholdModal');
-            if (el) {
-                thresholdModal = new bootstrap.Modal(el);
-            }
-            const elVol = document.getElementById('volumeLimitModal');
-            if (elVol) {
-                volumeLimitModal = new bootstrap.Modal(elVol);
-            }
-            const elTest = document.getElementById('testConfigModal');
-            if (elTest) {
-                testConfigModal = new bootstrap.Modal(elTest);
-            }
-            const elRepeat = document.getElementById('repeatMonitorConfigModal');
-            if (elRepeat) {
-                repeatMonitorConfigModal = new bootstrap.Modal(elRepeat);
-            }
-            const elOrderCancel = document.getElementById('orderCancelMonitorConfigModal');
-            if (elOrderCancel) {
-                orderCancelMonitorConfigModal = new bootstrap.Modal(elOrderCancel);
-            }
-        });
-
         let lastToastKey = '';
         let lastToastAt = 0;
 
-        function showToast(title, message, variant) {
-            const toastId = `toast-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-            let variantClass = '';
-            let iconSvg = '';
-            
-            if (variant === 'danger') {
-                variantClass = 'apple-toast-danger';
-                iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-danger"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
-            } else if (variant === 'success') {
-                variantClass = 'apple-toast-success';
-                iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success" style="color: var(--success-color);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+        function setText(el, value, fallback = '-') {
+            if (!el) return;
+            el.textContent = value ?? fallback;
+        }
+
+        function setState(el, value, state, fallback = '-') {
+            if (!el) return;
+            el.textContent = value ?? fallback;
+            if (state) {
+                el.dataset.state = state;
             } else {
-                // warning or default
-                variantClass = 'apple-toast-warning';
-                iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-warning"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+                delete el.dataset.state;
+            }
+        }
+
+        function formatDateTime(timestampSeconds) {
+            if (!timestampSeconds) return '-';
+            const date = new Date(Number(timestampSeconds) * 1000);
+            if (Number.isNaN(date.getTime())) return '-';
+            return date.toLocaleString('zh-CN', { hour12: false });
+        }
+
+        function updateLogCount() {
+            if (statusElements.lineCount) {
+                statusElements.lineCount.textContent = String(logContainer.children.length);
+            }
+        }
+
+        function isNearLogBottom() {
+            return logContainer.scrollHeight - logContainer.scrollTop - logContainer.clientHeight < 50;
+        }
+
+        function addSystemEvent(message, kind, replace = false) {
+            const shouldFollow = isNearLogBottom();
+            const event = document.createElement('div');
+            event.className = `terminal-event${kind === 'online' ? ' is-online' : ''}${kind === 'offline' ? ' is-offline' : ''}`;
+            event.textContent = message;
+
+            if (replace) {
+                logContainer.innerHTML = '';
             }
 
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = `
-                <div id="${toastId}" class="toast apple-toast ${variantClass}" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true">
-                    <div class="d-flex align-items-start p-3">
-                        <div class="me-3 mt-1">${iconSvg}</div>
-                        <div class="w-100">
-                            <div class="apple-toast-title mb-1">${title}</div>
-                            <div class="apple-toast-message">${message}</div>
-                        </div>
-                        <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
-                </div>
+            logContainer.appendChild(event);
+            if (shouldFollow || replace) {
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+            updateLogCount();
+        }
+
+        function syncRepeatThresholdState() {
+            thresholdInputs.repeat.disabled = !thresholdInputs.repeatEnabled.checked;
+        }
+
+        function iconMarkup(variant) {
+            if (variant === 'danger') {
+                return `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                `;
+            }
+            if (variant === 'success') {
+                return `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                `;
+            }
+            return `
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
             `;
-            const toastEl = wrapper.firstElementChild;
+        }
+
+        function showToast(title, message, variant) {
+            const tone = variant || 'warning';
+            const toastEl = document.createElement('div');
+            toastEl.className = `toast terminal-toast terminal-toast-${tone}`;
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+            toastEl.dataset.bsAutohide = 'true';
+
+            const body = document.createElement('div');
+            body.className = 'd-flex align-items-start p-3';
+
+            const iconWrap = document.createElement('div');
+            iconWrap.className = `terminal-toast-icon terminal-toast-icon-${tone} me-3 mt-1`;
+            iconWrap.innerHTML = iconMarkup(tone);
+
+            const content = document.createElement('div');
+            content.className = 'w-100';
+
+            const titleEl = document.createElement('div');
+            titleEl.className = 'terminal-toast-title';
+            titleEl.textContent = title;
+
+            const messageEl = document.createElement('div');
+            messageEl.className = 'terminal-toast-message';
+            messageEl.textContent = message;
+
+            const closeButton = document.createElement('button');
+            closeButton.type = 'button';
+            closeButton.className = 'btn-close btn-close-white ms-2';
+            closeButton.setAttribute('data-bs-dismiss', 'toast');
+            closeButton.setAttribute('aria-label', 'Close');
+
+            content.appendChild(titleEl);
+            content.appendChild(messageEl);
+            body.appendChild(iconWrap);
+            body.appendChild(content);
+            body.appendChild(closeButton);
+            toastEl.appendChild(body);
             toastContainer.appendChild(toastEl);
+
             const toast = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 6000 });
             toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
             toast.show();
@@ -442,35 +623,72 @@
 
         function setFormFromThresholds(thr) {
             if (!thr) return;
-            const o = safeInt(thr.max_order_count);
-            const c = safeInt(thr.max_cancel_count);
-            const r = safeInt(thr.max_repeat_count);
-            if (o) thresholdInputs.order.value = o;
-            if (c) thresholdInputs.cancel.value = c;
-            if (r) thresholdInputs.repeat.value = r;
-            thresholdInputs.repeatEnabled.checked = (Number(thr.max_repeat_count || 0) > 0);
+            const orderValue = safeInt(thr.max_order_count);
+            const cancelValue = safeInt(thr.max_cancel_count);
+            const repeatValue = safeInt(thr.max_repeat_count);
+
+            if (orderValue) thresholdInputs.order.value = orderValue;
+            if (cancelValue) thresholdInputs.cancel.value = cancelValue;
+            if (repeatValue) thresholdInputs.repeat.value = repeatValue;
+
+            thresholdInputs.repeatEnabled.checked = Number(thr.max_repeat_count || 0) > 0;
+            syncRepeatThresholdState();
         }
 
         function updateSnapshot(risk) {
-            const thresholds = (risk && risk.thresholds) ? risk.thresholds : null;
-            const metric = (risk && risk.metrics) ? risk.metrics : null;
+            const thresholds = risk && risk.thresholds ? risk.thresholds : null;
+            const metric = risk && risk.metrics ? risk.metrics : null;
 
             if (thresholds) {
                 thresholdCurrent.order.textContent = thresholds.max_order_count ?? '-';
                 thresholdCurrent.cancel.textContent = thresholds.max_cancel_count ?? '-';
                 thresholdCurrent.repeat.textContent = thresholds.max_repeat_count ?? '-';
             }
+
             if (metric) {
                 metrics.order.textContent = metric.order_count ?? '-';
                 metrics.cancel.textContent = metric.cancel_count ?? '-';
                 metrics.repeat.textContent = metric.repeat_total ?? '-';
             }
+
+            if (risk && Object.prototype.hasOwnProperty.call(risk, 'active')) {
+                const active = Boolean(risk.active);
+                setState(statusElements.risk, active ? '已启用' : '已暂停', active ? 'enabled' : 'disabled');
+            }
+        }
+
+        function renderWorkerStatus(data) {
+            if (!data) return;
+
+            const workerBusy = Boolean(data.busy);
+            const workerOnline = data.state === 'RUNNING';
+            const workerText = workerBusy ? '忙碌' : workerOnline ? '在线' : (data.state || '未知');
+            setState(statusElements.worker, workerText, workerBusy ? 'busy' : workerOnline ? 'online' : 'offline');
+
+            const currentCase = data.current_case_id || '空闲';
+            setState(statusElements.currentCase, currentCase, data.current_case_id ? 'busy' : 'online');
+            setText(statusElements.lastFinished, formatDateTime(data.last_case_finished_at), '-');
+            setState(statusElements.gateway, data.gateway_exists ? '已就绪' : '未就绪', data.gateway_exists ? 'ready' : 'error');
+
+            if (data.last_error) {
+                setState(statusElements.lastError, `最近错误: ${data.last_error}`, 'error', '等待 Worker 状态...');
+            } else {
+                setState(statusElements.lastError, '最近状态正常', 'ok', '等待 Worker 状态...');
+            }
+
+            if (data.risk) {
+                updateSnapshot(data.risk);
+            }
+        }
+
+        function renderSocketState(connected) {
+            setState(statusElements.socket, connected ? '已连接' : '未连接', connected ? 'online' : 'offline');
         }
 
         function loadThresholdsFromServer() {
             return fetch('/api/risk/thresholds', { method: 'GET' })
-                .then(res => res.json())
-                .then(data => {
+                .then((res) => res.json())
+                .then((data) => {
                     if (data.status !== 'success') throw new Error(data.msg || '读取阈值失败');
                     const thr = data.data || {};
                     setFormFromThresholds(thr);
@@ -479,17 +697,27 @@
                     thresholdCurrent.repeat.textContent = thr.max_repeat_count ?? '-';
                     return thr;
                 })
-                .catch(err => {
+                .catch((err) => {
                     showToast('读取阈值失败', String(err), 'danger');
                 });
         }
 
         function loadSnapshot() {
             return fetch('/api/risk/snapshot', { method: 'GET' })
-                .then(res => res.json())
-                .then(data => {
+                .then((res) => res.json())
+                .then((data) => {
                     if (data.status !== 'success') throw new Error(data.msg || '读取统计失败');
                     updateSnapshot(data.data || {});
+                })
+                .catch(() => {});
+        }
+
+        function refreshWorkerStatus() {
+            return fetch('/api/worker/status', { method: 'GET' })
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.status !== 'success') throw new Error(data.msg || '读取 Worker 状态失败');
+                    renderWorkerStatus(data.data || {});
                 })
                 .catch(() => {});
         }
@@ -505,7 +733,12 @@
                 return Promise.resolve(false);
             }
 
-            const payload = { max_order_count: maxOrder, max_cancel_count: maxCancel, max_repeat_count: maxRepeat };
+            const payload = {
+                max_order_count: maxOrder,
+                max_cancel_count: maxCancel,
+                max_repeat_count: maxRepeat,
+            };
+
             localStorage.setItem('risk_thresholds', JSON.stringify(payload));
 
             return fetch('/api/risk/thresholds', {
@@ -513,40 +746,38 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             })
-                .then(res => res.json())
-                .then(data => {
+                .then((res) => res.json())
+                .then((data) => {
                     if (data.status !== 'success') throw new Error(data.msg || '阈值设置失败');
-                    const risk = data.data || {};
-                    updateSnapshot(risk);
+                    updateSnapshot(data.data || {});
                     showToast('阈值已更新', `报单=${maxOrder}, 撤单=${maxCancel}, 重复报单=${maxRepeat}`, 'warning');
                     return true;
                 })
-                .catch(err => {
+                .catch((err) => {
                     showToast('阈值设置失败', String(err), 'danger');
                     return false;
                 });
         }
 
         function openThresholdModal() {
-            if (thresholdModal) {
-                loadThresholdsFromServer().then(() => {
-                    thresholdModal.show();
-                });
-            }
+            if (!thresholdModal) return;
+            loadThresholdsFromServer().then(() => {
+                thresholdModal.show();
+            });
         }
 
         function saveThresholds() {
             applyThresholds().then((success) => {
-                if (success) {
-                    if (thresholdModal) thresholdModal.hide();
+                if (success && thresholdModal) {
+                    thresholdModal.hide();
                 }
             });
         }
 
         function loadTestConfigFromServer() {
             return fetch('/api/test/config', { method: 'GET' })
-                .then(res => res.json())
-                .then(data => {
+                .then((res) => res.json())
+                .then((data) => {
                     if (data.status !== 'success') throw new Error(data.msg || '读取配置失败');
                     const conf = data.data || {};
                     if (conf.test_symbol) testConfigInputs.symbol.value = conf.test_symbol;
@@ -554,17 +785,16 @@
                     if (conf.deal_buy_price) testConfigInputs.dealPrice.value = conf.deal_buy_price;
                     return conf;
                 })
-                .catch(err => {
+                .catch((err) => {
                     showToast('读取配置失败', String(err), 'danger');
                 });
         }
 
         function openTestConfigModal() {
-            if (testConfigModal) {
-                loadTestConfigFromServer().then(() => {
-                    testConfigModal.show();
-                });
-            }
+            if (!testConfigModal) return;
+            loadTestConfigFromServer().then(() => {
+                testConfigModal.show();
+            });
         }
 
         function saveTestConfig() {
@@ -572,15 +802,15 @@
             const safePrice = parseFloat(testConfigInputs.safePrice.value);
             const dealPrice = parseFloat(testConfigInputs.dealPrice.value);
 
-            if (!symbol || isNaN(safePrice) || isNaN(dealPrice)) {
+            if (!symbol || Number.isNaN(safePrice) || Number.isNaN(dealPrice)) {
                 showToast('参数错误', '请填写有效的参数', 'danger');
                 return;
             }
 
-            const payload = { 
-                test_symbol: symbol, 
-                safe_buy_price: safePrice, 
-                deal_buy_price: dealPrice 
+            const payload = {
+                test_symbol: symbol,
+                safe_buy_price: safePrice,
+                deal_buy_price: dealPrice,
             };
 
             fetch('/api/test/config', {
@@ -588,13 +818,13 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             })
-                .then(res => res.json())
-                .then(data => {
+                .then((res) => res.json())
+                .then((data) => {
                     if (data.status !== 'success') throw new Error(data.msg || '配置保存失败');
                     showToast('配置已更新', `合约=${symbol}, 价格=${safePrice}/${dealPrice}`, 'warning');
                     if (testConfigModal) testConfigModal.hide();
                 })
-                .catch(err => {
+                .catch((err) => {
                     showToast('配置保存失败', String(err), 'danger');
                 });
         }
@@ -605,8 +835,8 @@
 
         function loadRepeatMonitorConfigFromServer() {
             return fetch('/api/test/config', { method: 'GET' })
-                .then(res => res.json())
-                .then(data => {
+                .then((res) => res.json())
+                .then((data) => {
                     if (data.status !== 'success') throw new Error(data.msg || '读取配置失败');
                     const conf = data.data || {};
                     if (conf.repeat_open_threshold) repeatMonitorConfigInputs.openThreshold.value = conf.repeat_open_threshold;
@@ -616,17 +846,16 @@
                     if (conf.deal_buy_price) repeatMonitorConfigInputs.dealPrice.value = conf.deal_buy_price;
                     return conf;
                 })
-                .catch(err => {
+                .catch((err) => {
                     showToast('读取配置失败', String(err), 'danger');
                 });
         }
 
         function openRepeatMonitorConfigModal() {
-            if (repeatMonitorConfigModal) {
-                loadRepeatMonitorConfigFromServer().then(() => {
-                    repeatMonitorConfigModal.show();
-                });
-            }
+            if (!repeatMonitorConfigModal) return;
+            loadRepeatMonitorConfigFromServer().then(() => {
+                repeatMonitorConfigModal.show();
+            });
         }
 
         function saveRepeatMonitorConfig() {
@@ -636,7 +865,7 @@
             const safePrice = parseFloat(repeatMonitorConfigInputs.safePrice.value);
             const dealPrice = parseFloat(repeatMonitorConfigInputs.dealPrice.value);
 
-            if (!openThr || !closeThr || !symbol || isNaN(safePrice) || isNaN(dealPrice)) {
+            if (!openThr || !closeThr || !symbol || Number.isNaN(safePrice) || Number.isNaN(dealPrice)) {
                 showToast('参数错误', '请填写有效的参数', 'danger');
                 return;
             }
@@ -654,40 +883,39 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             })
-                .then(res => res.json())
-                .then(data => {
+                .then((res) => res.json())
+                .then((data) => {
                     if (data.status !== 'success') throw new Error(data.msg || '配置保存失败');
                     showToast('配置已更新', `阈值=${openThr}/${closeThr}, 合约=${symbol}, 价格=${safePrice}/${dealPrice}`, 'warning');
                     if (repeatMonitorConfigModal) repeatMonitorConfigModal.hide();
                 })
-                .catch(err => {
+                .catch((err) => {
                     showToast('配置保存失败', String(err), 'danger');
                 });
         }
 
         function loadOrderCancelMonitorConfigFromServer() {
             return fetch('/api/test/config', { method: 'GET' })
-                .then(res => res.json())
-                .then(data => {
+                .then((res) => res.json())
+                .then((data) => {
                     if (data.status !== 'success') throw new Error(data.msg || '读取配置失败');
                     const conf = data.data || {};
                     if (conf.order_monitor_threshold) orderCancelMonitorConfigInputs.orderThreshold.value = conf.order_monitor_threshold;
                     if (conf.cancel_monitor_threshold) orderCancelMonitorConfigInputs.cancelThreshold.value = conf.cancel_monitor_threshold;
                     return conf;
                 })
-                .catch(err => {
+                .catch((err) => {
                     showToast('读取配置失败', String(err), 'danger');
                 });
         }
 
         function openOrderCancelMonitorConfigModal() {
-            if (orderCancelMonitorConfigModal) {
-                loadOrderCancelMonitorConfigFromServer().then(() => {
-                    if (!orderCancelMonitorConfigInputs.orderThreshold.value) orderCancelMonitorConfigInputs.orderThreshold.value = 1;
-                    if (!orderCancelMonitorConfigInputs.cancelThreshold.value) orderCancelMonitorConfigInputs.cancelThreshold.value = 1;
-                    orderCancelMonitorConfigModal.show();
-                });
-            }
+            if (!orderCancelMonitorConfigModal) return;
+            loadOrderCancelMonitorConfigFromServer().then(() => {
+                if (!orderCancelMonitorConfigInputs.orderThreshold.value) orderCancelMonitorConfigInputs.orderThreshold.value = 1;
+                if (!orderCancelMonitorConfigInputs.cancelThreshold.value) orderCancelMonitorConfigInputs.cancelThreshold.value = 1;
+                orderCancelMonitorConfigModal.show();
+            });
         }
 
         function saveOrderCancelMonitorConfig() {
@@ -699,45 +927,48 @@
                 return;
             }
 
-            const payload = { order_monitor_threshold: orderThr, cancel_monitor_threshold: cancelThr };
+            const payload = {
+                order_monitor_threshold: orderThr,
+                cancel_monitor_threshold: cancelThr,
+            };
+
             fetch('/api/test/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             })
-                .then(res => res.json())
-                .then(data => {
+                .then((res) => res.json())
+                .then((data) => {
                     if (data.status !== 'success') throw new Error(data.msg || '配置保存失败');
                     showToast('配置已更新', `报单监测阈值=${orderThr}, 撤单监测阈值=${cancelThr}`, 'warning');
                     if (orderCancelMonitorConfigModal) orderCancelMonitorConfigModal.hide();
                 })
-                .catch(err => {
+                .catch((err) => {
                     showToast('配置保存失败', String(err), 'danger');
                 });
         }
 
         function loadVolumeLimitConfigFromServer() {
             return fetch('/api/test/config', { method: 'GET' })
-                .then(res => res.json())
-                .then(data => {
+                .then((res) => res.json())
+                .then((data) => {
                     if (data.status !== 'success') throw new Error(data.msg || '读取配置失败');
                     const conf = data.data || {};
                     if (conf.test_symbol) volumeLimitInputs.symbol.value = conf.test_symbol;
                     if (conf.volume_limit_volume) volumeLimitInputs.volume.value = conf.volume_limit_volume;
                     return conf;
                 })
-                .catch(err => {
+                .catch((err) => {
                     showToast('读取配置失败', String(err), 'danger');
                 });
         }
 
         function openVolumeLimitModal() {
-            if (volumeLimitModal) {
-                loadVolumeLimitConfigFromServer().then(() => {
-                    if (!volumeLimitInputs.volume.value) volumeLimitInputs.volume.value = 10000;
-                    volumeLimitModal.show();
-                });
-            }
+            if (!volumeLimitModal) return;
+            loadVolumeLimitConfigFromServer().then(() => {
+                if (!volumeLimitInputs.volume.value) volumeLimitInputs.volume.value = 10000;
+                volumeLimitModal.show();
+            });
         }
 
         function saveAndRunVolumeLimit() {
@@ -749,48 +980,51 @@
                 return;
             }
 
-            const payload = { test_symbol: symbol, volume_limit_volume: volume };
+            const payload = {
+                test_symbol: symbol,
+                volume_limit_volume: volume,
+            };
+
             fetch('/api/test/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             })
-                .then(res => res.json())
-                .then(data => {
+                .then((res) => res.json())
+                .then((data) => {
                     if (data.status !== 'success') throw new Error(data.msg || '配置保存失败');
                     showToast('配置已更新', `合约=${symbol}, 手数=${volume}`, 'warning');
                     if (volumeLimitModal) volumeLimitModal.hide();
                     runTest('2.4.1.3');
                 })
-                .catch(err => {
+                .catch((err) => {
                     showToast('配置保存失败', String(err), 'danger');
                 });
         }
 
-        // 日志接收逻辑
-        socket.on('new_log', function(data) {
-            // 智能滚动判定：在插入内容前，检查是否接近底部 (允许 50px 误差)
-            const isAtBottom = logContainer.scrollHeight - logContainer.scrollTop - logContainer.clientHeight < 50;
-
+        function appendLogLine(data) {
+            const shouldFollow = isNearLogBottom();
             const div = document.createElement('div');
             div.className = 'log-line';
             div.style.color = data.color;
             div.textContent = data.message;
-            
             logContainer.appendChild(div);
-            
-            // 如果之前在底部，则保持跟随最新日志
-            if (isAtBottom) {
+
+            if (shouldFollow) {
                 logContainer.scrollTop = logContainer.scrollHeight;
             }
-            
-            // 性能优化：限制最大行数 1000
-            if (logContainer.children.length > 1000) {
+
+            while (logContainer.children.length > 1000) {
                 logContainer.removeChild(logContainer.firstChild);
             }
 
+            updateLogCount();
+        }
+
+        socket.on('new_log', (data) => {
+            appendLogLine(data);
+
             const msg = String(data.message || '');
-            
             let alertType = null;
             let alertTitle = '';
 
@@ -820,9 +1054,11 @@
         });
 
         socket.on('connect', () => {
-            logContainer.innerHTML = '<div class="text-success p-2">✅ 服务器已连接</div>';
+            renderSocketState(true);
+            addSystemEvent('服务器已连接', 'online', true);
             loadThresholdsFromServer();
             loadSnapshot();
+            refreshWorkerStatus();
 
             try {
                 const stored = JSON.parse(localStorage.getItem('risk_thresholds') || 'null');
@@ -832,25 +1068,71 @@
             } catch (e) {}
         });
 
-        socket.on('worker_status', (data) => {
-            if (data && data.risk) {
-                updateSnapshot(data.risk);
-            }
+        socket.on('disconnect', () => {
+            renderSocketState(false);
+            addSystemEvent('与服务器连接已断开', 'offline');
         });
 
-        // API 调用逻辑
+        socket.on('worker_status', (data) => {
+            renderWorkerStatus(data);
+        });
+
+        socket.on('case_started', (data) => {
+            setState(statusElements.worker, '忙碌', 'busy');
+            setState(statusElements.currentCase, data && data.case_id ? data.case_id : '执行中', 'busy');
+        });
+
+        socket.on('case_finished', () => {
+            setState(statusElements.worker, '在线', 'online');
+            setState(statusElements.currentCase, '空闲', 'online');
+            setText(statusElements.lastFinished, formatDateTime(Date.now() / 1000), '-');
+            refreshWorkerStatus();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const thresholdEl = document.getElementById('thresholdModal');
+            const volumeEl = document.getElementById('volumeLimitModal');
+            const testEl = document.getElementById('testConfigModal');
+            const repeatEl = document.getElementById('repeatMonitorConfigModal');
+            const orderCancelEl = document.getElementById('orderCancelMonitorConfigModal');
+
+            if (thresholdEl) thresholdModal = new bootstrap.Modal(thresholdEl);
+            if (volumeEl) volumeLimitModal = new bootstrap.Modal(volumeEl);
+            if (testEl) testConfigModal = new bootstrap.Modal(testEl);
+            if (repeatEl) repeatMonitorConfigModal = new bootstrap.Modal(repeatEl);
+            if (orderCancelEl) orderCancelMonitorConfigModal = new bootstrap.Modal(orderCancelEl);
+
+            thresholdInputs.repeatEnabled.addEventListener('change', syncRepeatThresholdState);
+            syncRepeatThresholdState();
+            renderSocketState(false);
+            refreshWorkerStatus();
+            loadSnapshot();
+            updateLogCount();
+        });
+
         function runTest(caseId) {
             fetch(`/api/run/${caseId}`, { method: 'POST' })
-                .then(res => res.json())
-                .then(data => {
-                    if(data.status !== 'success') alert(data.msg);
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.status !== 'success') {
+                        alert(data.msg);
+                        return;
+                    }
+
+                    setState(statusElements.worker, '忙碌', 'busy');
+                    setState(statusElements.currentCase, caseId, 'busy');
+                    refreshWorkerStatus();
                 });
         }
 
         function resetSystem() {
             fetch('/api/control/reset', { method: 'POST' })
-                .then(res => res.json())
-                .then(data => alert(data.msg));
+                .then((res) => res.json())
+                .then((data) => {
+                    alert(data.msg);
+                    loadSnapshot();
+                    refreshWorkerStatus();
+                });
         }
     </script>
 </body>
