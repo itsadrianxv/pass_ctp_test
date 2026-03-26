@@ -1,0 +1,4 @@
+[submodule "lib/vnpy_ctptest"]
+	path = lib/vnpy_ctptest
+	url = https://github.com/itsadrianxv/vnpy_ctptest.git
+	branch = main
