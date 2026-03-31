@@ -85,7 +85,7 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/maroonxv/pass-ctp-test.git
+git clone https://github.com/itsadrianxv/pass-ctp-test.git
 cd pass-ctp-test
 
 # 安装依赖
