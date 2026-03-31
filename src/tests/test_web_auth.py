@@ -42,6 +42,22 @@ class WebAuthTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_worker_status_returns_json_when_rpc_times_out(self):
+        app_module = _load_app_module()
+        app_module.rpc.request.side_effect = TimeoutError("timed out")
+        client = app_module.app.test_client()
+
+        with client.session_transaction() as flask_session:
+            flask_session["logged_in"] = True
+
+        response = client.get("/api/worker/status")
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(
+            response.get_json(),
+            {"status": "error", "msg": "Worker RPC 请求超时，请稍后重试"},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

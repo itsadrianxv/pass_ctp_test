@@ -160,6 +160,29 @@ def _wait_ping_ok(timeout_s: float) -> bool:
         time.sleep(0.2)
     return False
 
+
+def _request_worker_rpc(req_type: str, payload: dict | None = None, timeout: float = 5.0, autostart: bool = False) -> dict:
+    if autostart:
+        process_manager.start_worker()
+
+    try:
+        return rpc.request(req_type, payload or {}, timeout=timeout)
+    except TimeoutError:
+        log.warning("RPC request timed out: %s", req_type)
+        return {"ok": False, "error": "rpc_timeout"}
+    except OSError as exc:
+        log.warning("RPC request failed: %s (%s)", req_type, exc)
+        return {"ok": False, "error": "rpc_unavailable"}
+
+
+def _rpc_error_response(resp: dict, default_msg: str = "RPC 调用失败"):
+    error = str(resp.get("error", "") or "").strip()
+    if error == "rpc_timeout":
+        return jsonify({"status": "error", "msg": "Worker RPC 请求超时，请稍后重试"}), 503
+    if error == "rpc_unavailable":
+        return jsonify({"status": "error", "msg": "Worker 暂未就绪，请稍后重试"}), 503
+    return jsonify({"status": "error", "msg": error or default_msg}), 500
+
 def _hard_disconnect_only(case_id: str) -> tuple[bool, dict]:
     ping_timeout_s = float(os.environ.get("HARD_DISCONNECT_PING_TIMEOUT_S", "10"))
 
@@ -254,7 +277,6 @@ def _hard_reconnect_only(case_id: str) -> tuple[bool, dict]:
 
 @app.route('/api/run/<case_id>', methods=['POST'])
 def run_case(case_id):
-    process_manager.start_worker()
     case_id = (case_id or "").strip()
 
     if case_id == "2.2.1.2":
@@ -284,9 +306,9 @@ def run_case(case_id):
         log.info(f"【{case_id}】Worker 已终止")
         return jsonify({"status": "success", "msg": "Worker 已强制终止", "data": {"action": "kill"}})
 
-    resp = rpc.request("RUN_CASE", {"case_id": case_id}, timeout=3.0)
+    resp = _request_worker_rpc("RUN_CASE", {"case_id": case_id}, timeout=3.0, autostart=True)
     if not resp.get("ok"):
-        return jsonify({"status": "error", "msg": resp.get("error", "RPC 调用失败")}), 500
+        return _rpc_error_response(resp)
 
     accepted = bool((resp.get("data") or {}).get("accepted"))
     return jsonify(
@@ -298,24 +320,21 @@ def run_case(case_id):
 
 @app.route('/api/control/reset', methods=['POST'])
 def reset_system():
-    process_manager.start_worker()
-    resp = rpc.request("RESET_RISK", {}, timeout=3.0)
+    resp = _request_worker_rpc("RESET_RISK", timeout=3.0, autostart=True)
     if not resp.get("ok"):
-        return jsonify({"status": "error", "msg": resp.get("error", "RPC 调用失败")}), 500
+        return _rpc_error_response(resp)
     return jsonify({"status": "success", "msg": "系统状态已重置"})
 
 @app.route("/api/risk/thresholds", methods=["GET"])
 def get_risk_thresholds():
-    process_manager.start_worker()
-    resp = rpc.request("GET_THRESHOLDS", {}, timeout=2.0)
+    resp = _request_worker_rpc("GET_THRESHOLDS", timeout=2.0, autostart=True)
     if not resp.get("ok"):
-        return jsonify({"status": "error", "msg": resp.get("error", "RPC 调用失败")}), 500
+        return _rpc_error_response(resp)
     return jsonify({"status": "success", "data": resp.get("data") or {}})
 
 
 @app.route("/api/risk/thresholds", methods=["POST"])
 def set_risk_thresholds():
-    process_manager.start_worker()
     body = request.get_json(silent=True) or {}
 
     payload = {}
@@ -326,24 +345,22 @@ def set_risk_thresholds():
     if "max_repeat_count" in body:
         payload["max_repeat_count"] = body.get("max_repeat_count")
 
-    resp = rpc.request("SET_THRESHOLDS", payload, timeout=3.0)
+    resp = _request_worker_rpc("SET_THRESHOLDS", payload, timeout=3.0, autostart=True)
     if not resp.get("ok"):
-        return jsonify({"status": "error", "msg": resp.get("error", "RPC 调用失败")}), 500
+        return _rpc_error_response(resp)
     return jsonify({"status": "success", "data": resp.get("data") or {}})
 
 
 @app.route("/api/test/config", methods=["GET"])
 def get_test_config():
-    process_manager.start_worker()
-    resp = rpc.request("GET_TEST_CONFIG", {}, timeout=2.0)
+    resp = _request_worker_rpc("GET_TEST_CONFIG", timeout=2.0, autostart=True)
     if not resp.get("ok"):
-        return jsonify({"status": "error", "msg": resp.get("error", "RPC 调用失败")}), 500
+        return _rpc_error_response(resp)
     return jsonify({"status": "success", "data": resp.get("data") or {}})
 
 
 @app.route("/api/test/config", methods=["POST"])
 def set_test_config():
-    process_manager.start_worker()
     body = request.get_json(silent=True) or {}
     
     payload = {}
@@ -364,27 +381,25 @@ def set_test_config():
     if "cancel_monitor_threshold" in body:
         payload["cancel_monitor_threshold"] = body.get("cancel_monitor_threshold")
 
-    resp = rpc.request("SET_TEST_CONFIG", payload, timeout=3.0)
+    resp = _request_worker_rpc("SET_TEST_CONFIG", payload, timeout=3.0, autostart=True)
     if not resp.get("ok"):
-        return jsonify({"status": "error", "msg": resp.get("error", "RPC 调用失败")}), 500
+        return _rpc_error_response(resp)
     return jsonify({"status": "success", "data": resp.get("data") or {}})
 
 
 @app.route("/api/risk/snapshot", methods=["GET"])
 def get_risk_snapshot():
-    process_manager.start_worker()
-    resp = rpc.request("GET_RISK_SNAPSHOT", {}, timeout=2.0)
+    resp = _request_worker_rpc("GET_RISK_SNAPSHOT", timeout=2.0, autostart=True)
     if not resp.get("ok"):
-        return jsonify({"status": "error", "msg": resp.get("error", "RPC 调用失败")}), 500
+        return _rpc_error_response(resp)
     return jsonify({"status": "success", "data": resp.get("data") or {}})
 
 
 @app.route("/api/worker/status", methods=["GET"])
 def worker_status():
-    process_manager.start_worker()
-    resp = rpc.request("GET_STATUS", {}, timeout=2.0)
+    resp = _request_worker_rpc("GET_STATUS", timeout=2.0, autostart=True)
     if not resp.get("ok"):
-        return jsonify({"status": "error", "msg": resp.get("error", "RPC 调用失败")}), 500
+        return _rpc_error_response(resp)
     return jsonify({"status": "success", "data": resp.get("data")})
 
 
