@@ -10,3 +10,5 @@ terminal_info.dat
 __pycache__
 
 .vscode/
+.codex/
+.impeccable.md

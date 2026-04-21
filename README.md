@@ -13,12 +13,12 @@
 ### 界面预览
 
 <p align="center">
-  <img src="doc/images/web1.png" alt="登录界面" width="80%" />
+  <img src="docs/images/web1.png" alt="登录界面" width="80%" />
   <br><em>登录界面</em>
 </p>
 
 <p align="center">
-  <img src="doc/images/web2.png" alt="Web 控制台" width="80%" />
+  <img src="docs/images/web2.png" alt="Web 控制台" width="80%" />
   <br><em>Web 控制台</em>
 </p>
 
@@ -33,7 +33,7 @@
 ├── requirements.txt
 ├── run.bat                   # 一键启动脚本
 │
-├── doc/                      # 文档
+├── docs/                     # 文档
 │
 ├── lib/                      # 修改版第三方库（vnpy / vnpy_ctp / vnpy_ctptest）
 │
@@ -249,15 +249,15 @@ python src/web/app.py
 
 1. **解压与启动**：将收到的压缩包解压至测试环境任意位置，运行文件夹内的 `Argus.exe`。
 
-   ![Argus 启动界面](doc/images/argus1.png)
+   ![Argus 启动界面](docs/images/argus1.png)
 
 2. **生成电子证据**：点击「1. 选择文件」，选择正在测试的程序化交易系统启动文件（`.exe` / `.dll` 等），然后点击「2. 生成电子证据」。
 
-   ![选择文件并生成证据](doc/images/argus2.png)
+   ![选择文件并生成证据](docs/images/argus2.png)
 
 3. **获取证据文件**：提示"电子证据已成功生成并保存"后，在 `Argus.exe` 同级目录下会生成加密文件，命名格式为 `ArgusReport_操作日期_操作时间.dat`。
 
-   ![生成的证据文件](doc/images/argus3.png)
+   ![生成的证据文件](docs/images/argus3.png)
 
 ### 4.2 终端仅有 Linux 服务
 
